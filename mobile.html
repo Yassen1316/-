@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>ذكّرني</title>
+  
+  <!-- PWA Meta Tags -->
+  <meta name="theme-color" content="#439384">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="application-name" content="ذكّرني">
+  <meta name="apple-mobile-web-app-title" content="ذكّرني">
+  <link rel="icon" type="image/png" href="https://upload.wikimedia.org/wikipedia/commons/2/23/Allah_word_Arabic_calligraphy_symbol.png">
+  <link rel="apple-touch-icon" href="https://upload.wikimedia.org/wikipedia/commons/2/23/Allah_word_Arabic_calligraphy_symbol.png">
+
+  <!-- React & ReactDOM (UMD) -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  
+  <!-- Babel Standalone -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Lucide Icons (UMD) -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+  
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Tajawal', 'sans-serif'],
+            serif: ['Amiri', 'serif'],
+          },
+          colors: {
+            islamic: {
+              50: '#f2f9f6',
+              100: '#e0f2ed',
+              200: '#c2e3d8',
+              300: '#95cdbd',
+              400: '#63af9f',
+              500: '#439384',
+              600: '#32766b',
+              700: '#2a5f57',
+              800: '#254d47',
+              900: '#21403c',
+            }
+          },
+          animation: {
+            'fade-in': 'fadeIn 0.5s ease-out forwards',
+            'slide-up': 'slideUp 0.4s ease-out forwards',
+          },
+          keyframes: {
+            fadeIn: {
+              '0%': { opacity: '0' },
+              '100%': { opacity: '1' },
+            },
+            slideUp: {
+              '0%': { opacity: '0', transform: 'translateY(20px)' },
+              '100%': { opacity: '1', transform: 'translateY(0)' },
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    body { -webkit-font-smoothing: antialiased; background-color: #f2f9f6; }
+    .no-select { user-select: none; -webkit-user-select: none; }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-islamic-50 via-teal-50 to-cyan-50 min-h-screen text-slate-800">
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect, useContext, createContext, useRef } = React;
+    const { 
+      BookOpen, Moon, Sun, CloudSun, Coffee, CheckCircle, List, Book, 
+      Heart, Shield, Smile, Share2, Copy, Volume2, ChevronRight, ArrowLeft,
+      Home, Sparkles, Square
+    } = lucide;
+
+    // --- DATA ---
+    const APP_DATA = [
+      {
+        id: 'azkar',
+        title: 'قسم الأذكار',
+        description: 'حصن المسلم من أذكار الصباح والمساء وغيرها',
+        categories: [
+          {
+            id: 'azkar_morning',
+            title: 'أذكار الصباح',
+            items: [
+              { id: 'm1', text: 'أَصْبَحْنَا وَأَصْبَحَ الْمُلْكُ لِلَّهِ، وَالْحَمْدُ لِلَّهِ لاَ إِلَهَ إِلاَّ اللَّهُ وَحْدَهُ لاَ شَرِيكَ لَهُ، لَهُ الْمُلْكُ وَلَهُ الْحَمْدُ وَهُوَ عَلَى كُلِّ شَيْءٍ قَدِيرٌ.', count: 1, source: 'رواه مسلم' },
+              { id: 'm2', text: 'اللَّهُمَّ بِكَ أَصْبَحْنَا وَبِكَ أَمْسَيْنَا، وَبِكَ نَحْيَا وَبِكَ نَمُوتُ وَإِلَيْكَ النُّشُورُ.', count: 1, source: 'الترمذي' },
+              { id: 'm3', text: 'سُبْحَانَ اللَّهِ وَبِحَمْدِهِ.', count: 100, note: 'من قالها مائة مرة حين يصبح وحين يمسي لم يأت أحد يوم القيامة بأفضل مما جاء به إلا أحد قال مثل ما قال أو زاد عليه.' }
+            ]
+          },
+          {
+            id: 'azkar_evening',
+            title: 'أذكار المساء',
+            items: [
+              { id: 'e1', text: 'أَمْسَيْنَا وَأَمْسَى الْمُلْكُ لِلَّهِ، وَالْحَمْدُ لِلَّهِ لاَ إِلَهَ إِلاَّ اللَّهُ وَحْدَهُ لاَ شَرِيكَ لَهُ.', count: 1 },
+              { id: 'e2', text: 'اللَّهُمَّ بِكَ أَمْسَيْنَا وَبِكَ أَصْبَحْنَا، وَبِكَ نَحْيَا وَبِكَ نَمُوتُ وَإِلَيْكَ الْمَصِيرُ.', count: 1 },
+              { id: 'e3', text: 'أَعُوذُ بِكَلِمَاتِ اللَّهِ التَّامَّاتِ مِنْ شَرِّ مَا خَلَقَ.', count: 3 }
+            ]
+          },
+          {
+            id: 'azkar_sleep',
+            title: 'أذكار النوم',
+            items: [
+              { id: 's1', text: 'بِاسْمِكَ رَبِّـي وَضَعْـتُ جَنْـبِي، وَبِكَ أَرْفَعُـه، فَإِن أَمْسَـكْتَ نَفْسـي فَارْحَـمْها، وَإِنْ أَرْسَلْتَـها فَاحْفَظْـها بِمـا تَحْفَـظُ بِه عِبـادَكَ الصَّـالِحـين.', count: 1 },
+              { id: 's2', text: 'اللَّهُمَّ إِنَّكَ خَلَقْـتَ نَفْسـي وَأَنْتَ تَوَفَّـاهـا لَكَ ممَـاتُـها وَمَحْـياها، إِنْ أَحْيَيْـتَها فَاحْفَظْـها، وَإِنْ أَمَتَّـها فَاغْفِـرْ لَـها. اللَّهُمَّ إِنِّـي أَسْـأَلُـكَ العـافِـيَة.', count: 1 }
+            ]
+          },
+          {
+            id: 'azkar_waking',
+            title: 'أذكار الاستيقاظ',
+            items: [
+              { id: 'w1', text: 'الْحَمْدُ لِلَّهِ الَّذِي أَحْيَانَا بَعْدَ مَا أَمَاتَنَا وَإِلَيْهِ النُّشُورُ.', count: 1 }
+            ]
+          },
+          {
+            id: 'azkar_prayer',
+            title: 'أذكار بعد الصلاة',
+            items: [
+              { id: 'p1', text: 'أَسْتَغْفِرُ اللَّهَ، أَسْتَغْفِرُ اللَّهَ، أَسْتَغْفِرُ اللَّهَ.', count: 3 },
+              { id: 'p2', text: 'اللَّهُمَّ أَنْتَ السَّلاَمُ، وَمِنْكَ السَّلاَمُ، تَبَارَكْتَ يَا ذَا الْجَلاَلِ وَالإِكْرَامِ.', count: 1 }
+            ]
+          },
+          {
+            id: 'azkar_general',
+            title: 'أذكار عامة',
+            items: [
+              { id: 'g1', text: 'سُبْحَانَ اللَّهِ، وَالْحَمْدُ لِلَّهِ، وَلاَ إِلَهَ إِلاَّ اللَّهُ، وَاللَّهُ أَكْبَرُ.', count: 1 },
+              { id: 'g2', text: 'لاَ حَوْلَ وَلاَ قُوَّةَ إِلاَّ بِاللَّهِ.', count: 1 }
+            ]
+          }
+        ]
+      },
+      {
+        id: 'adiyah',
+        title: 'قسم الأدعية',
+        description: 'جوامع الدعاء من القرآن والسنة',
+        categories: [
+          {
+            id: 'dua_quran',
+            title: 'أدعية من القرآن',
+            items: [
+              { id: 'q1', text: 'رَبَّنَا آتِنَا فِي الدُّنْيَا حَسَنَةً وَفِي الآخِرَةِ حَسَنَةً وَقِنَا عَذَابَ النَّارِ.', source: 'سورة البقرة: 201' },
+              { id: 'q2', text: 'رَبَّنَا لاَ تُزِغْ قُلُوبَنَا بَعْدَ إِذْ هَدَيْتَنَا وَهَبْ لَنَا مِن لَّدُنكَ رَحْمَةً إِنَّكَ أَنتَ الْوَهَّابُ.', source: 'سورة آل عمران: 8' }
+            ]
+          },
+          {
+            id: 'dua_sunnah',
+            title: 'أدعية من السنة',
+            items: [
+              { id: 'su1', text: 'اللَّهُمَّ إِنِّي أَسْأَلُكَ الْهُدَى وَالتُّقَى وَالْعَفَافَ وَالْغِنَى.', source: 'رواه مسلم' },
+              { id: 'su2', text: 'اللَّهُمَّ مُصَرِّفَ الْقُلُوبِ صَرِّفْ قُلُوبَنَا عَلَى طَاعَتِكَ.', source: 'رواه مسلم' }
+            ]
+          },
+          {
+            id: 'dua_rizq',
+            title: 'أدعية للرزق',
+            items: [
+              { id: 'r1', text: 'اللَّهُمَّ اكْفِنِي بِحَلاَلِكَ عَنْ حَرَامِكَ، وَأَغْنِنِي بِفَضْلِكَ عَمَّنْ سِوَاكَ.', source: 'رواه الترمذي' },
+              { id: 'r2', text: 'اللَّهُمَّ إِنِّي أَسْأَلُكَ عِلْمًا نَافِعًا، وَرِزْقًا طَيِّبًا، وَعَمَلاً مُتَقَبَّلاً.', source: 'رواه ابن ماجه' }
+            ]
+          },
+          {
+            id: 'dua_faraj',
+            title: 'أدعية للفرج',
+            items: [
+              { id: 'f1', text: 'لاَ إِلَهَ إِلاَّ أَنْتَ سُبْحَانَكَ إِنِّي كُنْتُ مِنَ الظَّالِمِينَ.', source: 'سورة الأنبياء: 87' },
+              { id: 'f2', text: 'اللَّهُمَّ إِنِّي عَبْدُكَ، ابْنُ عَبْدِكَ، ابْنُ أَمَتِكَ، نَاصِيَتِي بِيَدِكَ، مَاضٍ فِيَّ حُكْمُكَ، عَدْلٌ فِيَّ قَضَاؤُكَ.', source: 'مسند أحمد' }
+            ]
+          },
+          {
+            id: 'dua_illness',
+            title: 'أدعية للمرض',
+            items: [
+              { id: 'i1', text: 'اللَّهُمَّ رَبَّ النَّاسِ أَذْهِبِ الْبَاسَ، اشْفِهِ وَأَنْتَ الشَّافِي، لاَ شِفَاءَ إِلاَّ شِفَاؤُكَ، شِفَاءً لاَ يُغَادِرُ سَقَمًا.', source: 'متفق عليه' },
+              { id: 'i2', text: 'بِسْمِ اللَّهِ (ثلاثاً)، أَعُوذُ بِاللَّهِ وَقُدْرَتِهِ مِنْ شَرِّ مَا أَجِدُ وَأُحَاذِرُ (سبع مرات).', source: 'رواه مسلم' }
+            ]
+          },
+          {
+            id: 'dua_general',
+            title: 'أدعية عامة',
+            items: [
+              { id: 'dg1', text: 'يَا حَيُّ يَا قَيُّومُ بِرَحْمَتِكَ أَسْتَغِيثُ، أَصْلِحْ لِي شَأْنِي كُلَّهُ، وَلاَ تَكِلْنِي إِلَى نَفْسِي طَرْفَةَ عَيْنٍ.', source: 'رواه الحاكم' }
+            ]
+          }
+        ]
+      }
+    ];
+
+    // --- CONTEXT ---
+    const AudioContext = createContext({
+      playingId: null,
+      play: () => {},
+      stop: () => {},
+    });
+
+    const AudioProvider = ({ children }) => {
+      const [playingId, setPlayingId] = useState(null);
+      const utteranceRef = useRef(null);
+
+      useEffect(() => {
+        const loadVoices = () => window.speechSynthesis.getVoices();
+        loadVoices();
+        if (window.speechSynthesis.onvoiceschanged !== undefined) {
+          window.speechSynthesis.onvoiceschanged = loadVoices;
+        }
+        return () => window.speechSynthesis.cancel();
+      }, []);
+
+      const stop = () => {
+        window.speechSynthesis.cancel();
+        setPlayingId(null);
+        utteranceRef.current = null;
+      };
+
+      const play = (id, text) => {
+        if (playingId === id) {
+          stop();
+          return;
+        }
+        window.speechSynthesis.cancel();
+
+        const utterance = new SpeechSynthesisUtterance(text);
+        utteranceRef.current = utterance;
+        utterance.lang = 'ar-SA';
+        utterance.rate = 0.85;
+
+        const voices = window.speechSynthesis.getVoices();
+        const arabicVoice = voices.find(v => v.lang.includes('ar') && v.name.includes('Google')) ||
+                            voices.find(v => v.lang.includes('ar-SA')) || 
+                            voices.find(v => v.lang.includes('ar'));
+        if (arabicVoice) utterance.voice = arabicVoice;
+
+        utterance.onstart = () => setPlayingId(id);
+        utterance.onend = () => { setPlayingId(null); utteranceRef.current = null; };
+        utterance.onerror = (e) => { console.error("TTS Error", e); setPlayingId(null); utteranceRef.current = null; };
+
+        window.speechSynthesis.speak(utterance);
+      };
+
+      return (
+        <AudioContext.Provider value={{ playingId, play, stop }}>
+          {children}
+        </AudioContext.Provider>
+      );
+    };
+
+    // --- COMPONENTS ---
+    const getIconForCategory = (id, size = 24) => {
+      switch (id) {
+        case 'azkar_morning': return <Sun size={size} className="text-amber-500" />;
+        case 'azkar_evening': return <Moon size={size} className="text-indigo-500" />;
+        case 'azkar_sleep': return <CloudSun size={size} className="text-slate-500" />;
+        case 'azkar_waking': return <Coffee size={size} className="text-orange-500" />;
+        case 'azkar_prayer': return <CheckCircle size={size} className="text-emerald-500" />;
+        case 'azkar_general': return <List size={size} className="text-teal-500" />;
+        case 'dua_quran': return <BookOpen size={size} className="text-emerald-600" />;
+        case 'dua_sunnah': return <Book size={size} className="text-green-600" />;
+        case 'dua_rizq': return <Sparkles size={size} className="text-yellow-500" />;
+        case 'dua_faraj': return <Shield size={size} className="text-blue-500" />;
+        case 'dua_illness': return <Heart size={size} className="text-rose-500" />;
+        case 'dua_general': return <Smile size={size} className="text-cyan-500" />;
+        default: return <BookOpen size={size} className="text-islamic-600" />;
+      }
+    };
+
+    const Header = ({ title, showBack = false, onBack }) => {
+      const [isScrolled, setIsScrolled] = useState(false);
+      useEffect(() => {
+        const handleScroll = () => setIsScrolled(window.scrollY > 20);
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+      }, []);
+
+      return (
+        <header className={`sticky top-0 z-50 transition-all duration-300 h-16 flex items-center px-4 ${isScrolled ? 'bg-white/95 backdrop-blur-md shadow-md border-b border-islamic-200' : 'bg-white/60 backdrop-blur-sm border-b border-transparent shadow-sm'}`}>
+          <div className="w-full max-w-2xl mx-auto flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              {showBack ? (
+                <button onClick={onBack} className="p-2 -mr-2 rounded-full hover:bg-islamic-100 text-islamic-700 transition-colors active:scale-95"><ArrowLeft size={24} /></button>
+              ) : (
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors duration-300 ${isScrolled ? 'bg-islamic-100 text-islamic-700' : 'bg-white text-islamic-600 shadow-sm'}`}><BookOpen size={20} /></div>
+              )}
+              <h1 className={`text-xl font-bold font-sans tracking-wide transition-colors duration-300 ${isScrolled ? 'text-islamic-900' : 'text-islamic-800'}`}>{title}</h1>
+            </div>
+          </div>
+        </header>
+      );
+    };
+
+    const Footer = () => (
+      <footer className="py-8 text-center text-islamic-400 text-sm">
+        <p>Made with <Heart size={12} className="inline text-rose-400 mx-1 fill-rose-400" /> by <span className="font-bold text-islamic-600">Yassen Ehab</span></p>
+      </footer>
+    );
+
+    const ActionButton = ({ icon: Icon, label, onClick, variant = 'secondary' }) => {
+      const baseClasses = "flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 active:scale-95";
+      const variants = {
+        primary: "bg-islamic-600 text-white shadow-md hover:bg-islamic-700",
+        secondary: "bg-islamic-50 text-islamic-700 hover:bg-islamic-100",
+        outline: "border border-islamic-200 text-islamic-600 hover:bg-islamic-50"
+      };
+      return <button onClick={onClick} className={`${baseClasses} ${variants[variant]}`}><Icon size={16} /><span>{label}</span></button>;
+    };
+
+    const ContentCard = ({ item, type }) => {
+      const [copied, setCopied] = useState(false);
+      const { playingId, play, stop } = useContext(AudioContext);
+      const isPlaying = playingId === item.id;
+
+      const handleCopy = () => {
+        navigator.clipboard.writeText(item.text);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      };
+      const handleShare = () => {
+        window.open(`https://wa.me/?text=${encodeURIComponent(item.text + '\n\n' + '- من تطبيق ذكّرني')}`, '_blank');
+      };
+      const handleSpeak = () => {
+        if (!('speechSynthesis' in window)) return alert("المتصفح لا يدعم الصوت");
+        isPlaying ? stop() : play(item.id, item.text);
+      };
+
+      return (
+        <div className="bg-white rounded-2xl p-6 shadow-sm border border-islamic-100 hover:shadow-md transition-shadow duration-300 animate-slide-up group relative overflow-hidden">
+          <div className="absolute -top-10 -left-10 w-24 h-24 bg-islamic-50 rounded-full opacity-50 group-hover:scale-150 transition-transform duration-700 ease-out"></div>
+          <div className="relative z-10">
+            <p className="text-xl md:text-2xl leading-loose font-serif text-slate-800 mb-6 text-center select-text">{item.text}</p>
+            {item.source && <p className="text-sm text-islamic-500 mb-4 text-center font-medium opacity-80">— {item.source}</p>}
+            {item.note && <div className="bg-amber-50 border-r-4 border-amber-300 p-3 mb-4 rounded-l-lg text-sm text-amber-800">{item.note}</div>}
+            
+            <div className="flex flex-wrap items-center justify-between gap-4 pt-4 border-t border-gray-100">
+               {item.count && type === 'azkar' && (
+                 <div className="flex items-center gap-2 bg-islamic-50 px-3 py-1 rounded-full">
+                   <span className="text-xs text-islamic-400">التكرار</span>
+                   <span className="text-lg font-bold text-islamic-600">{item.count}</span>
+                 </div>
+               )}
+               <div className="flex items-center gap-2 mr-auto">
+                 {type === 'azkar' && <ActionButton icon={isPlaying ? Square : Volume2} label={isPlaying ? "إيقاف" : "استماع"} onClick={handleSpeak} variant={isPlaying ? "primary" : "secondary"} />}
+                 <ActionButton icon={copied ? CheckCircle : Copy} label={copied ? "تم النسخ" : "نسخ"} onClick={handleCopy} variant="secondary" />
+                 {type === 'adiyah' && <ActionButton icon={Share2} label="مشاركة" onClick={handleShare} variant="outline" />}
+               </div>
+            </div>
+          </div>
+        </div>
+      );
+    };
+
+    const CategoryCard = ({ category, onClick }) => (
+      <button onClick={onClick} className="bg-white p-6 rounded-2xl shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 border border-islamic-100 w-full text-right flex items-center justify-between group animate-slide-up">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-xl bg-islamic-50 group-hover:bg-islamic-100 flex items-center justify-center transition-colors text-islamic-600">{getIconForCategory(category.id)}</div>
+          <div><h3 className="font-bold text-lg text-gray-800 group-hover:text-islamic-700 transition-colors">{category.title}</h3><p className="text-sm text-gray-400 mt-1">{category.items.length} ذكر/دعاء</p></div>
+        </div>
+        <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-300 group-hover:bg-islamic-500 group-hover:text-white transition-all"><ChevronRight size={18} className="rotate-180" /></div>
+      </button>
+    );
+
+    // --- NAVIGATION LOGIC (SIMPLE ROUTER) ---
+    const App = () => {
+      const [path, setPath] = useState('/'); // '/', '/azkar', '/azkar/morning'
+      
+      const navigate = (newPath) => {
+        setPath(newPath);
+        window.scrollTo(0, 0);
+      };
+
+      const parts = path.split('/').filter(Boolean);
+      const isHome = path === '/';
+      const sectionId = parts[0];
+      const categoryId = parts[1];
+
+      // Home Page
+      if (isHome) {
+        return (
+          <div className="min-h-screen flex flex-col">
+            <Header title="ذكّرني" />
+            <main className="flex-1 flex flex-col items-center justify-center p-6 animate-fade-in relative overflow-hidden">
+               <div className="absolute top-1/4 -right-20 w-64 h-64 bg-emerald-100 rounded-full blur-3xl opacity-30 -z-10"></div>
+               <div className="absolute bottom-1/4 -left-20 w-80 h-80 bg-cyan-100 rounded-full blur-3xl opacity-30 -z-10"></div>
+               <div className="text-center mb-12 max-w-lg">
+                 <h2 className="text-3xl font-serif font-bold text-islamic-800 mb-4">أَلا بِذِكْرِ اللَّهِ تَطْمَئِنُّ الْقُلُوبُ</h2>
+                 <p className="text-islamic-600 text-lg">مرحباً بك في واحتك اليومية للذكر والدعاء</p>
+               </div>
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-2xl">
+                 <button onClick={() => navigate('/azkar')} className="group relative bg-white overflow-hidden rounded-3xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-emerald-100">
+                    <div className="absolute top-0 right-0 w-full h-2 bg-gradient-to-l from-emerald-400 to-teal-400"></div>
+                    <div className="flex flex-col items-center gap-6 z-10 relative">
+                      <div className="w-20 h-20 bg-emerald-50 rounded-full flex items-center justify-center text-emerald-600 group-hover:scale-110 transition-transform duration-300"><Sun size={40} /></div>
+                      <h3 className="text-2xl font-bold text-gray-800 group-hover:text-emerald-700">قسم الأذكار</h3>
+                      <p className="text-gray-500 text-sm">أذكار الصباح، المساء، النوم وغيرها</p>
+                    </div>
+                 </button>
+                 <button onClick={() => navigate('/adiyah')} className="group relative bg-white overflow-hidden rounded-3xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-cyan-100">
+                    <div className="absolute top-0 right-0 w-full h-2 bg-gradient-to-l from-cyan-400 to-blue-400"></div>
+                    <div className="flex flex-col items-center gap-6 z-10 relative">
+                      <div className="w-20 h-20 bg-cyan-50 rounded-full flex items-center justify-center text-cyan-600 group-hover:scale-110 transition-transform duration-300"><BookOpen size={40} /></div>
+                      <h3 className="text-2xl font-bold text-gray-800 group-hover:text-cyan-700">قسم الأدعية</h3>
+                      <p className="text-gray-500 text-sm">أدعية من القرآن والسنة</p>
+                    </div>
+                 </button>
+               </div>
+            </main>
+            <Footer />
+          </div>
+        );
+      }
+
+      const sectionData = APP_DATA.find(s => s.id === sectionId);
+
+      // Category Items List
+      if (categoryId) {
+        const category = sectionData?.categories.find(c => c.id === categoryId);
+        return (
+          <div className="min-h-screen bg-slate-50">
+            <Header title={category?.title || ''} showBack onBack={() => navigate(`/${sectionId}`)} />
+            <main className="max-w-2xl mx-auto p-4 md:p-6 pb-20">
+              <div className="flex flex-col gap-6">
+                {category?.items.map((item, idx) => (
+                  <div key={item.id} style={{ animationDelay: `${idx * 0.1}s` }} className="animate-slide-up">
+                    <ContentCard item={item} type={sectionId} />
+                  </div>
+                ))}
+              </div>
+              <div className="mt-12 text-center text-islamic-400 text-sm animate-pulse"><p>انتهى المحتوى</p></div>
+            </main>
+          </div>
+        );
+      }
+
+      // Section Categories List
+      if (sectionData) {
+        return (
+          <div className="min-h-screen bg-gradient-to-br from-islamic-50 to-white">
+            <Header title={sectionData.title} showBack onBack={() => navigate('/')} />
+            <main className="max-w-2xl mx-auto p-4 md:p-6 pb-20">
+              <div className="mb-8 text-center animate-fade-in"><h2 className="text-xl font-medium text-islamic-700">{sectionData.description}</h2></div>
+              <div className="grid gap-4">
+                {sectionData.categories.map((cat, idx) => (
+                  <div key={cat.id} style={{ animationDelay: `${idx * 0.1}s` }} className="animate-slide-up">
+                    <CategoryCard category={cat} onClick={() => navigate(`/${sectionId}/${cat.id}`)} />
+                  </div>
+                ))}
+              </div>
+            </main>
+          </div>
+        );
+      }
+      
+      return <div>Error</div>;
+    };
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<AudioProvider><App /></AudioProvider>);
+  </script>
+</body>
+</html>
